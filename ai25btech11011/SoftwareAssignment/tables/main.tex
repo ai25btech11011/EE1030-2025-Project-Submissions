@@ -1,0 +1,87 @@
+\let\negmedspace\undefined
+\let\negthickspace\undefined
+\documentclass[12pt,journal]{IEEEtran}
+
+\setlength{\headheight}{1cm}
+\setlength{\headsep}{0mm}
+\usepackage[a4paper,margin=10mm,onecolumn]{geometry}
+\usepackage{gvv-book}
+\usepackage{gvv}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{txfonts}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{gensymb}
+\usepackage{comment}
+\usepackage[breaklinks=true]{hyperref}
+\usepackage{tkz-euclide}
+\usepackage{listings}
+\def\inputGnumericTable{}
+\usepackage[latin1]{inputenc}
+\usepackage{color}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{calc}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage{ifthen}
+\usepackage{lscape}
+\usepackage{circuitikz}
+
+% Increase line spacing slightly for readability and length
+\renewcommand{\baselinestretch}{1.25}
+
+\tikzstyle{block} = [rectangle, draw, fill=blue!20,
+    text width=4em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{sum} = [draw, fill=blue!10, circle, minimum size=1cm, node distance=1.5cm]
+\tikzstyle{input} = [coordinate]
+\tikzstyle{output} = [coordinate]
+
+\begin{document}
+
+\bibliographystyle{IEEEtran}
+\vspace{3cm}
+
+\title{Software Assignment - Image Compression Using Truncated SVD \\
+Error Table}
+\author{AI25BTECH11011 - G.VARUN KUMAR}
+\maketitle
+{\let\newpage\relax\maketitle}
+
+\renewcommand{\thefigure}{\theenumi}
+\renewcommand{\thetable}{\theenumi}
+\setlength{\intextsep}{10pt}
+
+\numberwithin{equation}{enumi}
+\numberwithin{figure}{enumi}
+\renewcommand{\thetable}{\theenumi}
+
+\begin{table}[h!]
+\centering
+\caption{Reconstruction Error for Different Images using Truncated SVD}
+\label{tab:error_values}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Original Image} & \textbf{k Value} & \textbf{Reconstruction Error ($E_k$)} \\ \hline
+Einstein & 5 & 4712.9979 \\ \hline
+Einstein & 20 & 2126.4778 \\ \hline
+Einstein & 50 & 880.4435 \\ \hline
+Einstein & 100 & 164.8112 \\ \hline
+Globe & 5 & 20703.9655 \\ \hline
+Globe & 20 & 10633.9403 \\ \hline
+Globe & 50 & 6185.1881 \\ \hline
+Globe & 100 & 3672.6511 \\ \hline
+Greyscale & 5 & 11154.4725 \\ \hline
+Greyscale & 20 & 3815.2310 \\ \hline
+Greyscale & 50 & 1178.3995 \\ \hline
+Greyscale & 100 & 549.9458 \\ \hline
+\end{tabular}
+\end{table}
+
+\end{document}

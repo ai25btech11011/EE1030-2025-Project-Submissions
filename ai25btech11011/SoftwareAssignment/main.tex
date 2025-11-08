@@ -1,0 +1,420 @@
+\let\negmedspace\undefined
+\let\negthickspace\undefined
+\documentclass[12pt,journal]{IEEEtran}
+
+\setlength{\headheight}{1cm}
+\setlength{\headsep}{0mm}
+\usepackage[a4paper,margin=10mm,onecolumn]{geometry}
+\usepackage{gvv-book}
+\usepackage{gvv}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{txfonts}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{gensymb}
+\usepackage{comment}
+\usepackage[breaklinks=true]{hyperref}
+\usepackage{tkz-euclide}
+\usepackage{listings}
+\def\inputGnumericTable{}
+\usepackage[latin1]{inputenc}
+\usepackage{color}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{calc}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage{ifthen}
+\usepackage{lscape}
+\usepackage{circuitikz}
+
+% Increase line spacing slightly for readability and length
+\renewcommand{\baselinestretch}{1.25}
+
+\tikzstyle{block} = [rectangle, draw, fill=blue!20,
+    text width=4em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{sum} = [draw, fill=blue!10, circle, minimum size=1cm, node distance=1.5cm]
+\tikzstyle{input} = [coordinate]
+\tikzstyle{output} = [coordinate]
+
+\begin{document}
+
+\bibliographystyle{IEEEtran}
+\vspace{3cm}
+
+\title{Software Assignment - Image Compression Using Truncated SVD}
+\author{AI25BTECH11011 - G.VARUN KUMAR}
+\maketitle
+{\let\newpage\relax\maketitle}
+
+\renewcommand{\thefigure}{\theenumi}
+\renewcommand{\thetable}{\theenumi}
+\setlength{\intextsep}{10pt}
+
+\numberwithin{equation}{enumi}
+\numberwithin{figure}{enumi}
+\renewcommand{\thetable}{\theenumi}
+
+% ---------- CONTENTS PAGE ----------
+\begin{center}
+\vspace*{2cm}
+{\Huge \textbf{Contents}}
+\vspace{1cm}
+\end{center}
+
+\begin{enumerate}[leftmargin=2cm, label=\arabic*., itemsep=12pt]
+    \item \textbf{Objective}
+    \item \textbf{Summary of Gilbert Strang's SVD Lecture}
+    \item \textbf{Explanation of the Implemented Algorithm}
+    \begin{enumerate}[label*=\arabic*., leftmargin=1.5cm, itemsep=8pt]
+        \item \textbf{Mathematical Background}
+        \item \textbf{Pseudocode}
+    \end{enumerate}
+    \item \textbf{Comparison of Algorithms}
+    \item \textbf{Reconstructed Images for Different Values of $k$}
+    \item \textbf{Error Analysis}
+    \item \textbf{ Discussion of trade-offs and reflections on implementation choice}
+\end{enumerate}
+
+\newpage
+% ---------- MAIN CONTENT STARTS ----------
+
+\begin{enumerate}
+
+% ---------- OBJECTIVE ----------
+\item \textbf{Objective :}
+
+The main goal of this assignment is to perform image compression using the concept of Singular Value Decomposition (SVD).  
+By keeping only a few of the largest singular values, the size of the image can be reduced while maintaining good visual quality.  
+This project helps to understand how mathematical concepts like matrix factorization can be practically applied to real-world problems such as data storage and transmission.
+
+\vspace{5mm}
+This approach also demonstrates how SVD can identify and retain the most important information from an image, showing the relationship between mathematics and efficient data representation.
+
+\vspace{1cm}
+
+% ---------- SVD SUMMARY ----------
+\item \textbf{Summary of Gilbert Strang's SVD Lecture :}
+
+\begin{enumerate}
+\item Singular Value Decomposition (SVD) is a method to break any real matrix $A$ into three matrices:
+$A = U \Sigma V^T$, where $U$ and $V$ are orthogonal, and $\Sigma$ holds positive singular values.
+\item The columns of $U$ and $V$ represent the main directions in the row and column spaces of $A$.
+\item SVD can be seen geometrically as transforming a unit sphere into an ellipsoid, with singular values representing the stretching in each direction.
+\item The singular values are always arranged in decreasing order: $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r > 0$.
+\item $V$ contains eigenvectors of $A^T A$, and $U$ contains eigenvectors of $A A^T$.
+\item The rank of the matrix equals the number of non-zero singular values.
+\item The best rank-$k$ approximation is given by:
+\begin{align}
+A_k = \sum_{i=1}^{k} \sigma_i u_i v_i^T
+\end{align}
+\item SVD is used in applications like image compression, denoising, and dimensionality reduction.
+\end{enumerate}
+
+\vspace{1cm}
+
+\item \textbf{Explanation of the Implemented Algorithm :}
+
+\begin{enumerate}
+\item \textbf{Mathematical Background}
+
+The Singular Value Decomposition (SVD) represents any real matrix $A \in \mathbb{R}^{m \times n}$ as:
+\begin{align}
+    A = U \Sigma V^T
+\end{align}
+where:
+\begin{itemize}
+    \item $U$ is an $m \times m$ orthogonal matrix.
+    \item $V$ is an $n \times n$ orthogonal matrix.
+    \item $\Sigma$ is a diagonal matrix with singular values $\sigma_1 \ge \sigma_2 \ge \cdots \ge 0$.
+\end{itemize}
+
+In image compression, we use only the top $k$ singular values to form a low-rank approximation that captures most of the image's information.
+i think it is better to write what our code will do instead of it
+
+\vspace{5mm}
+
+\item \textbf{Pseudocode of Truncated SVD Algorithm}
+
+\begin{lstlisting}[mathescape=true, basicstyle=\ttfamily\footnotesize, frame=single]
+Input: Matrix A (m x n), number of components k
+Output: Approximation A_k
+
+for i = 1 to k do
+    Initialize random vector v
+    repeat
+        v = normalize(A^T * (A * v))
+    until convergence
+    sigma = norm(A * v)
+    u = (A * v) / sigma
+    Store (u, sigma, v)
+    A = A - sigma * u * v^T
+end for
+
+Reconstruct A_k = sum_{i=1}^{k} sigma_i * u_i * v_i^T
+\end{lstlisting}
+
+This iterative approach efficiently compresses the image while retaining essential visual information.
+
+\end{enumerate}
+
+\vspace{1cm}
+
+% ---------- COMPARISON ----------
+\item \textbf{Comparison of Algorithms:}
+
+\begin{enumerate}
+\item \textbf{Direct SVD (Full Decomposition):}
+\begin{itemize}
+    \item Performs complete matrix decomposition to get all singular values.
+    \item Accurate but computationally expensive for large matrices.
+    \item Manual implementation without libraries is difficult.
+\end{itemize}
+
+\item \textbf{Iterative / Power Method:}
+\begin{itemize}
+    \item Finds dominant singular values by repeated multiplication.
+    \item Simple and efficient for large data.
+    \item Used for image compression in this project.
+\end{itemize}
+
+\item \textbf{QR + SVD Hybrid Method:}
+\begin{itemize}
+    \item Uses QR decomposition to simplify the matrix before applying SVD.
+    \item Improves numerical stability but increases complexity.
+\end{itemize}
+
+\item \textbf{Jacobi Method:}
+\begin{itemize}
+    \item Based on successive orthogonal rotations.
+    \item Accurate but too slow for image data.
+\end{itemize}
+\end{enumerate}
+
+\textbf{Comparison Summary:}
+\begin{itemize}
+    \item \textbf{Direct SVD:} Accurate but slow.
+    \item \textbf{Power Method:} Simple and efficient.
+    \item \textbf{QR + SVD:} Stable but complex.
+    \item \textbf{Jacobi:} Accurate but slow.
+\end{itemize}
+
+\textbf{Why Iterative Power Method Was Used:}
+\begin{itemize}
+    \item Balanced accuracy and speed.
+    \item Easy to implement manually.
+    \item Handles large images effectively.
+    \item Easy to understand, so I used this method in my project.
+\end{itemize}
+
+\vspace{1cm}
+
+\item \textbf{Reconstructed Images for Different Values of $k$ :}
+
+\begin{itemize}
+    \item $k$ determines how many singular values are kept for reconstruction.
+    \item Smaller $k$ means higher compression but less quality.
+    \item Larger $k$ gives better quality but lower compression.
+    \item Below are results for different values of $k$.
+    \item As $k$ increases, reconstructed images become clearer and closer to the original.
+    \item Small $k$ produces high compression but blurry results.
+    \item Optimal $k$ balances compression and image quality.
+\end{itemize}
+
+\vspace{5mm}
+
+\begin{figure}[h!]
+    \centering
+    \textbf{Image 1}\\[5pt]
+    \includegraphics[width=0.35\textwidth]{figs/einstein.jpg}\\
+    \textbf{Original}\\[6pt]
+    \includegraphics[width=0.35\textwidth]{figs/einstein5.jpg}
+    \hspace{0.5cm}
+    \includegraphics[width=0.35\textwidth]{figs/einstein20.jpg}\\
+    \textbf{k=5 \hspace{3.5cm} k=20}\\[6pt]
+    \includegraphics[width=0.35\textwidth]{figs/einstein50.jpg}
+    \hspace{0.5cm}
+    \includegraphics[width=0.35\textwidth]{figs/einstein100.jpg}\\
+    \textbf{k=50 \hspace{3.3cm} k=100}\\[5pt]
+    \caption{Original image and its reconstructed versions for different $k$ values (Image 1).}
+\end{figure}
+
+
+\begin{figure}[h!]
+    \centering
+    \textbf{Image 2}\\[5pt]
+    \includegraphics[width=0.35\textwidth]{figs/globe.jpg}\\
+    \textbf{Original}\\[6pt]
+    \vspace{3cm}
+    \includegraphics[width=0.35\textwidth]{figs/globe5.jpg}
+    \hspace{0.5cm}
+    \includegraphics[width=0.35\textwidth]{figs/globe20.jpg}\\
+    \textbf{k=5 \hspace{3.5cm} k=20}\\[6pt]
+	\includegraphics[width=0.35\textwidth]{figs/globe50.jpg}
+    \hspace{0.5cm}
+	\includegraphics[width=0.35\textwidth]{figs/globe100.jpg}\\
+    \textbf{k=50 \hspace{3.3cm} k=100}\\[5pt]
+    \caption{Original image and its reconstructed versions for different $k$ values (Image 2).}
+\end{figure}
+
+
+\begin{figure}[h!]
+    \centering
+    \textbf{Image 3}\\[5pt]
+    \includegraphics[width=0.35\textwidth]{figs/greyscale.jpg}\\
+    \textbf{Original}\\[6pt]
+    \includegraphics[width=0.35\textwidth]{figs/greyscale5.jpg}
+    \hspace{0.5cm}
+    \includegraphics[width=0.35\textwidth]{figs/greyscale20.jpg}\\
+    \textbf{k=5 \hspace{3.5cm} k=20}\\[6pt]
+    \includegraphics[width=0.35\textwidth]{figs/greyscale50.jpg}
+    \hspace{0.5cm}
+    \includegraphics[width=0.35\textwidth]{figs/greyscale100.jpg}\\
+    \textbf{k=50 \hspace{3.3cm} k=100}\\[5pt]
+    \caption{Original image and its reconstructed versions for different $k$ values (Image 3).}
+\end{figure}
+
+
+\item \textbf{Error Analysis}
+
+In image compression using Singular Value Decomposition (SVD), the 
+\textbf{reconstruction error} represents the difference between the original 
+image matrix $A$ and the reconstructed matrix $\hat{A}_k$, which is obtained 
+using only the top $k$ singular values. This error helps to measure how much 
+information or detail is lost due to compression.
+
+The reconstruction error is calculated using the \textit{Frobenius norm}, which 
+measures the overall difference between two matrices. It is mathematically 
+expressed as:
+
+\begin{align}
+E_k &= \|A - \hat{A}_k\|_F \\
+    &= \sqrt{\sum_{i=1}^{m} \sum_{j=1}^{n} (A_{ij} - \hat{A}_{ij})^2}
+\end{align}
+
+where:
+\begin{itemize}
+    \item $A$ is the original image matrix of size $m \times n$,
+    \item $\hat{A}_k$ is the reconstructed image matrix using the first $k$ singular values,
+    \item $E_k$ is the reconstruction error or deviation between $A$ and $\hat{A}_k$.
+\end{itemize}
+
+\begin{enumerate}
+    \item The reconstruction error $E_k$ indicates how well the image is 
+          approximated for a given $k$ value.
+    \item A smaller $E_k$ means the reconstructed image is closer to the 
+          original, hence better quality.
+    \item When $k$ is small, only a few dominant singular values are retained; 
+          the image loses details and appears blurred, leading to high error.
+    \item As $k$ increases, more singular values are included in reconstruction, 
+          improving visual quality and reducing $E_k$.
+    \item The rate of error reduction depends on the image content, smoother 
+          images show faster convergence with fewer singular values.
+\end{enumerate}
+
+\begin{table}[h!]
+\centering
+\caption{Reconstruction Error for Different Images using Truncated SVD}
+\label{tab:error_values}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Original Image} & \textbf{k Value} & \textbf{Reconstruction Error ($E_k$)} \\ \hline
+Einstein & 5 & 4712.9979 \\ \hline
+Einstein & 20 & 2126.4778 \\ \hline
+Einstein & 50 & 880.4435 \\ \hline
+Einstein & 100 & 164.8112 \\ \hline
+Globe & 5 & 20703.9655 \\ \hline
+Globe & 20 & 10633.9403 \\ \hline
+Globe & 50 & 6185.1881 \\ \hline
+Globe & 100 & 3672.6511 \\ \hline
+Greyscale & 5 & 11154.4725 \\ \hline
+Greyscale & 20 & 3815.2310 \\ \hline
+Greyscale & 50 & 1178.3995 \\ \hline
+Greyscale & 100 & 549.9458 \\ \hline
+\end{tabular}
+\end{table}
+
+
+\item \textbf{Discussion of Trade-offs and Reflections on Implementation Choice}
+
+\textbf{Trade-offs in SVD-based Compression}
+
+The SVD-based image compression technique presents several important trade-offs between 
+compression efficiency, reconstruction accuracy, and computational complexity. These 
+trade-offs are consistent with the discussions in the reference material and are summarized below:
+
+\begin{enumerate}
+    \item \textbf{Compression Ratio vs. Image Quality:}
+    \begin{itemize}
+        \item When the number of singular values $k$ is small, the image can be stored using fewer 
+              parameters $(U_k, \Sigma_k, V_k)$, leading to a higher compression ratio.
+        \item However, the reconstructed image appears blurred or loses fine details because 
+              most of the smaller singular values (which capture texture and edge information) are discarded.
+        \item As $k$ increases, more singular components are included, resulting in better reconstruction 
+              but larger storage size.
+    \end{itemize}
+
+    \item \textbf{Error vs. Computational Time:}
+    \begin{itemize}
+        \item The reconstruction error decreases with increasing $k$, as more information from the 
+              original matrix is retained.
+        \item However, this comes at the cost of higher computational time since the power iteration 
+              and deflation process must be repeated for each additional singular value.
+    \end{itemize}
+
+    \item \textbf{Optimal Selection of $k$:}
+    \begin{itemize}
+        \item Choosing an appropriate value of $k$ is critical. 
+        \item A smaller $k$ offers efficient compression but noticeable visual degradation, 
+              while a larger $k$ maintains quality but increases both computation and storage.
+        \item Practically, a moderate value such as $k = 50$ or $k = 100$ often provides a good 
+              trade-off for most grayscale images.
+    \end{itemize}
+\end{enumerate}
+
+Mathematically, the relationship between reconstruction error and $k$ can be represented as:
+\begin{align}
+E_5 &> E_{20} > E_{50} > E_{100}
+\end{align}
+where $E_k$ denotes the Frobenius norm of the difference between the original image matrix $A$ 
+and its rank-$k$ reconstruction $A_k$, computed as:
+\begin{align}
+E_k = \sqrt{\sum_{i=1}^{m}\sum_{j=1}^{n}(A_{ij} - A_{k,ij})^2}
+\end{align}
+
+This clearly shows that as $k$ increases, the approximation becomes more accurate and the error 
+monotonically decreases.
+
+\textbf{Reflections on Implementation Choices}
+
+\begin{enumerate}
+    \item \textbf{Use of Power Iteration Method:}
+    \begin{itemize}
+        \item The power iteration algorithm was chosen to compute the dominant singular value 
+              and corresponding singular vectors.
+        \item It iteratively updates $u$ and $v$ vectors until convergence, providing an 
+              efficient approach for the first few singular values.
+    \end{itemize}
+
+    \item \textbf{Deflation Strategy:}
+    \begin{itemize}
+        \item After each singular triplet $(\sigma_i, u_i, v_i)$ is obtained, the matrix is 
+              deflated using:
+              \begin{align}
+              A \leftarrow A - \sigma_i u_i v_i^T
+              \end{align}
+        \item This ensures subsequent iterations extract orthogonal singular vectors, gradually 
+              decomposing the matrix into its major components.
+    \end{itemize}
+\end{enumerate}
+
+
+\end{enumerate}
+
+\end{document}
